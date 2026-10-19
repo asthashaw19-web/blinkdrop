@@ -1,0 +1,751 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#e6e0ff">
+  <meta name="description" content="Share files and text between your phone and laptop.">
+  <title>BlinkDrop — a little less waiting</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=Figtree:wght@400;600;700&family=JetBrains+Mono:wght@600&display=swap" rel="stylesheet">
+
+  <style>
+    :root {
+      color-scheme: light;
+      --bg: #e6e0ff;
+      --paper: #fffdf8;
+      --ink: #1c1240;
+      --muted: #5f5688;
+      --line: #cfc7f0;
+      --volt: #d6ff3d;
+      --pink: #ff8cc6;
+      --blue: #5b4bff;
+      --green: #0b7a55;
+      --shadow: 5px 5px 0 var(--ink);
+      font-family: Figtree, ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+    }
+
+    * { box-sizing: border-box; }
+    [hidden] { display: none !important; }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      color: var(--ink);
+      background-color: var(--bg);
+      background-image: radial-gradient(#b9aef0 1.2px, transparent 1.4px);
+      background-size: 22px 22px;
+    }
+
+    button, input, textarea { font: inherit; }
+    button, a { -webkit-tap-highlight-color: transparent; }
+    button { cursor: pointer; }
+    button:disabled { opacity: .45; cursor: not-allowed; }
+
+    button:focus-visible, a:focus-visible, input:focus-visible, textarea:focus-visible {
+      outline: 3px solid var(--blue);
+      outline-offset: 3px;
+    }
+
+    .wrap { max-width: 1160px; margin: auto; padding: 0 28px; }
+
+    /* ---------- header ---------- */
+    header {
+      height: 88px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      font-family: "Bricolage Grotesque", Figtree, sans-serif;
+      font-weight: 800;
+      font-size: 26px;
+      letter-spacing: -1px;
+    }
+
+    .logo {
+      display: grid;
+      place-items: center;
+      width: 42px;
+      height: 42px;
+      border: 2px solid var(--ink);
+      border-radius: 12px;
+      background: var(--volt);
+      color: var(--ink);
+      box-shadow: 3px 3px 0 var(--ink);
+      transform: rotate(-6deg);
+    }
+    .logo svg { width: 24px; height: 24px; }
+
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 9px;
+      padding: 8px 14px;
+      border: 2px solid var(--ink);
+      border-radius: 999px;
+      background: var(--paper);
+      color: var(--ink);
+      font-size: 13px;
+      font-weight: 700;
+    }
+    .dot { width: 9px; height: 9px; background: #9b92c4; border-radius: 50%; border: 1.5px solid var(--ink); }
+    .badge.online { background: var(--volt); }
+    .badge.online .dot { background: #12b886; animation: pulse 1.6s ease-out infinite; }
+
+    @keyframes pulse {
+      0% { box-shadow: 0 0 0 0 #12b88699; }
+      100% { box-shadow: 0 0 0 9px #12b88600; }
+    }
+
+    /* ---------- hero ---------- */
+    .hero {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+      align-items: center;
+      gap: 40px;
+      padding: 44px 0 52px;
+    }
+
+    h1 {
+      margin: 0 0 18px;
+      font-family: "Bricolage Grotesque", Figtree, sans-serif;
+      font-size: clamp(46px, 6.4vw, 84px);
+      line-height: .98;
+      letter-spacing: -3.5px;
+      font-weight: 800;
+    }
+
+    .hero p {
+      margin: 0;
+      max-width: 440px;
+      color: var(--muted);
+      line-height: 1.65;
+      font-size: 17px;
+    }
+
+    .features { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 24px; }
+    .features span {
+      padding: 6px 12px;
+      border: 2px solid var(--ink);
+      border-radius: 999px;
+      background: var(--paper);
+      font-size: 13px;
+      font-weight: 700;
+    }
+    .features span:nth-child(2) { background: var(--pink); }
+    .features span:nth-child(3) { background: var(--volt); }
+
+    /* signature moment: laptop <-> phone with a packet in transit */
+    .link-art {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0;
+      padding: 10px 0;
+    }
+
+    .dev {
+      flex: none;
+      display: grid;
+      place-items: center;
+      border: 2.5px solid var(--ink);
+      background: var(--paper);
+      box-shadow: var(--shadow);
+    }
+    .dev svg { width: 70%; height: 70%; }
+    .laptop { width: 150px; height: 112px; border-radius: 16px; transform: rotate(-3deg); }
+    .phone  { width: 84px; height: 140px; border-radius: 20px; background: var(--pink); transform: rotate(4deg); }
+
+    .wire {
+      position: relative;
+      flex: 1 1 90px;
+      max-width: 170px;
+      height: 0;
+      border-top: 3px dashed var(--ink);
+    }
+    .packet {
+      position: absolute;
+      top: -17px;
+      left: 0;
+      width: 30px;
+      height: 30px;
+      display: grid;
+      place-items: center;
+      border: 2.5px solid var(--ink);
+      border-radius: 9px;
+      background: var(--volt);
+      animation: travel 2.4s ease-in-out infinite alternate;
+    }
+    .packet svg { width: 16px; height: 16px; }
+
+    @keyframes travel {
+      from { left: 0; transform: rotate(-12deg); }
+      to   { left: calc(100% - 30px); transform: rotate(12deg); }
+    }
+
+    /* ---------- layout + cards ---------- */
+    .layout {
+      display: grid;
+      grid-template-columns: 330px minmax(0, 1fr);
+      gap: 26px;
+      align-items: start;
+      padding-bottom: 32px;
+    }
+
+    .card {
+      background: var(--paper);
+      border: 2.5px solid var(--ink);
+      border-radius: 20px;
+      box-shadow: var(--shadow);
+      padding: 24px;
+      min-width: 0;
+    }
+
+    .card-top {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 20px;
+    }
+
+    .step {
+      display: inline-grid;
+      place-items: center;
+      width: 28px;
+      height: 28px;
+      margin-right: 10px;
+      border: 2px solid var(--ink);
+      background: var(--volt);
+      border-radius: 50%;
+      font-size: 13px;
+      font-weight: 800;
+    }
+
+    h2 { font-family: "Bricolage Grotesque", Figtree, sans-serif; font-size: 20px; margin: 0; font-weight: 800; letter-spacing: -.4px; }
+    h3 { font-family: "Bricolage Grotesque", Figtree, sans-serif; font-size: 20px; margin: 12px 0 8px; }
+
+    p, .muted { color: var(--muted); line-height: 1.6; }
+    .small { font-size: 13px; }
+
+    label { display: block; margin-bottom: 7px; color: var(--ink); font-size: 13px; font-weight: 700; }
+
+    input, textarea {
+      width: 100%;
+      border: 2px solid var(--ink);
+      border-radius: 10px;
+      background: #fff;
+      color: var(--ink);
+      padding: 11px 12px;
+      outline: none;
+      font-size: 16px;
+    }
+    input:focus, textarea:focus { box-shadow: 3px 3px 0 var(--blue); }
+    textarea { min-height: 155px; resize: vertical; line-height: 1.6; }
+
+    .qr {
+      width: 178px;
+      height: 178px;
+      display: block;
+      margin: 16px auto 6px;
+      padding: 8px;
+      background: #fff;
+      border: 2px solid var(--ink);
+      border-radius: 14px;
+    }
+
+    .center { text-align: center; }
+
+    .code {
+      font-family: "JetBrains Mono", ui-monospace, SFMono-Regular, Consolas, monospace;
+      font-size: 28px;
+      font-weight: 600;
+      letter-spacing: 4px;
+      margin: 10px 0;
+    }
+    #roomCode { display: inline-block; padding: 2px 12px; background: var(--volt); border: 2px solid var(--ink); border-radius: 10px; }
+
+    /* ---------- buttons ---------- */
+    .button {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      padding: 11px 17px;
+      border: 2px solid var(--ink);
+      border-radius: 10px;
+      background: var(--volt);
+      color: var(--ink);
+      font-size: 14px;
+      font-weight: 800;
+      text-decoration: none;
+      box-shadow: 3px 3px 0 var(--ink);
+      transition: transform .12s, box-shadow .12s;
+    }
+    .button:hover:not(:disabled) { transform: translate(-1px, -1px); box-shadow: 5px 5px 0 var(--ink); }
+    .button:active:not(:disabled) { transform: translate(3px, 3px); box-shadow: 0 0 0 var(--ink); }
+
+    .secondary { background: #fff; }
+
+    .text-button {
+      border: 0;
+      padding: 4px 0;
+      background: none;
+      color: var(--blue);
+      font-size: 13px;
+      font-weight: 700;
+      text-decoration: underline;
+      text-decoration-thickness: 2px;
+      text-underline-offset: 3px;
+    }
+
+    .wide { width: 100%; }
+
+    .divider {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin: 22px 0;
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 600;
+    }
+    .divider::before, .divider::after { content: ""; flex: 1; border-top: 2px dashed var(--line); }
+
+    .join-row { display: flex; gap: 10px; }
+    .join-row input { min-width: 0; letter-spacing: 2px; font-family: "JetBrains Mono", ui-monospace, monospace; }
+
+    .connection {
+      margin-top: 20px;
+      padding: 12px 14px;
+      border: 2px dashed var(--ink);
+      border-radius: 12px;
+      background: #f3f0ff;
+      color: var(--ink);
+      font-size: 13px;
+      line-height: 1.6;
+      overflow-wrap: anywhere;
+    }
+    .connection.live { background: var(--volt); border-style: solid; }
+
+    .device-art {
+      display: grid;
+      place-items: center;
+      width: 76px;
+      height: 76px;
+      border: 2.5px solid var(--ink);
+      border-radius: 22px;
+      background: var(--pink);
+      box-shadow: 4px 4px 0 var(--ink);
+      font-size: 34px;
+      margin: 24px auto 14px;
+      transform: rotate(-4deg);
+    }
+
+    /* ---------- tabs ---------- */
+    .tabs { display: inline-flex; padding: 3px; border: 2px solid var(--ink); border-radius: 12px; background: #fff; gap: 3px; }
+    .tabs button {
+      padding: 7px 18px;
+      border: 0;
+      border-radius: 8px;
+      background: transparent;
+      color: var(--muted);
+      font-size: 13px;
+      font-weight: 800;
+    }
+    .tabs button.active { color: var(--ink); background: var(--volt); box-shadow: inset 0 0 0 2px var(--ink); }
+
+    /* ---------- dropzone ---------- */
+    .dropzone {
+      width: 100%;
+      min-height: 250px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 25px;
+      background: #fff;
+      border: 2.5px dashed var(--ink);
+      border-radius: 18px;
+      color: var(--ink);
+      margin-top: 22px;
+      transition: background .15s, transform .15s, box-shadow .15s;
+    }
+    .dropzone:hover, .dropzone.drag {
+      background: var(--volt);
+      transform: translate(-2px, -2px);
+      box-shadow: 6px 6px 0 var(--ink);
+    }
+
+    .upload-art {
+      width: 64px;
+      height: 64px;
+      background: var(--pink);
+      border: 2.5px solid var(--ink);
+      border-radius: 18px;
+      display: grid;
+      place-items: center;
+      color: var(--ink);
+      margin-bottom: 16px;
+      transform: rotate(-5deg);
+      transition: transform .2s;
+    }
+    .dropzone:hover .upload-art, .dropzone.drag .upload-art { transform: rotate(4deg) translateY(-5px); }
+    .upload-art svg { width: 30px; height: 30px; }
+
+    .dropzone strong { font-family: "Bricolage Grotesque", Figtree, sans-serif; font-size: 22px; margin-bottom: 7px; letter-spacing: -.5px; }
+    .dropzone .small { color: var(--ink); line-height: 1.8; }
+    .choose { font-weight: 800; text-decoration: underline; text-decoration-thickness: 2px; text-underline-offset: 3px; }
+
+    .file-types { display: flex; justify-content: center; flex-wrap: wrap; gap: 7px; margin-top: 18px; }
+    .file-types span {
+      border: 1.5px solid var(--ink);
+      border-radius: 6px;
+      padding: 2px 8px;
+      font-size: 11px;
+      font-weight: 700;
+      background: #fff;
+    }
+
+    /* ---------- text, history ---------- */
+    .text-panel { margin-top: 22px; }
+    .text-footer, .receive-options, .history-top {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      margin-top: 14px;
+    }
+
+    .receive-options { padding: 16px 0 20px; border-bottom: 2px dashed var(--line); align-items: start; }
+    .receive-options p { margin: 0; max-width: 400px; }
+    .history-top { margin-top: 24px; }
+    .history-top h3 { font-size: 17px; margin: 0; }
+
+    .empty {
+      margin-top: 14px;
+      padding: 30px 14px;
+      text-align: center;
+      border: 2px dashed var(--line);
+      border-radius: 14px;
+      color: var(--muted);
+      font-size: 14px;
+    }
+
+    .transfer { padding: 16px 0; border-bottom: 2px dashed var(--line); }
+    .transfer-name { font-size: 14px; font-weight: 800; overflow-wrap: anywhere; }
+    .transfer-detail { margin-top: 5px; color: var(--muted); font-size: 12px; line-height: 1.6; overflow-wrap: anywhere; }
+
+    progress {
+      width: 100%;
+      height: 12px;
+      display: block;
+      margin-top: 11px;
+      border: 2px solid var(--ink);
+      border-radius: 99px;
+      overflow: hidden;
+      accent-color: var(--volt);
+      background: #fff;
+    }
+    progress::-webkit-progress-bar { background: #fff; }
+    progress::-webkit-progress-value { background: var(--volt); border-right: 2px solid var(--ink); }
+    progress::-moz-progress-bar { background: var(--volt); }
+
+    .actions { display: flex; gap: 14px; margin-top: 10px; }
+    .actions a { color: var(--blue); font-size: 13px; font-weight: 800; text-underline-offset: 3px; }
+
+    pre {
+      white-space: pre-wrap;
+      overflow-wrap: anywhere;
+      font: 13px/1.65 "JetBrains Mono", ui-monospace, SFMono-Regular, Consolas, monospace;
+      background: #f3f0ff;
+      border: 2px solid var(--ink);
+      padding: 12px;
+      border-radius: 10px;
+      max-height: 220px;
+      overflow-y: auto;
+    }
+
+    footer { padding: 6px 0 32px; color: var(--muted); text-align: center; font-size: 12px; line-height: 1.7; }
+
+    /* ---------- dialog + toast ---------- */
+    dialog {
+      border: 2.5px solid var(--ink);
+      border-radius: 20px;
+      padding: 28px;
+      max-width: 400px;
+      width: calc(100% - 36px);
+      color: var(--ink);
+      background: var(--paper);
+      box-shadow: 8px 8px 0 var(--ink);
+    }
+    dialog::backdrop { background: #1c124080; backdrop-filter: blur(4px); }
+    dialog .buttons { display: flex; gap: 12px; margin-top: 24px; }
+    dialog .buttons button { flex: 1; }
+
+    #toast {
+      position: fixed;
+      bottom: 24px;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 10;
+      padding: 13px 20px;
+      border: 2px solid var(--ink);
+      border-radius: 12px;
+      background: var(--volt);
+      color: var(--ink);
+      font-size: 14px;
+      font-weight: 700;
+      line-height: 1.5;
+      width: max-content;
+      max-width: calc(100vw - 32px);
+      box-shadow: 4px 4px 0 var(--ink);
+    }
+
+    /* ---------- responsive ---------- */
+    @media (max-width: 860px) {
+      .hero { grid-template-columns: 1fr; gap: 26px; }
+      .link-art { justify-content: flex-start; }
+    }
+
+    @media (max-width: 760px) {
+      .wrap { padding-inline: 17px; }
+      header { height: 74px; }
+      .brand { font-size: 22px; }
+      .hero { padding: 24px 0 34px; }
+      h1 { letter-spacing: -2.5px; }
+      .hero p { font-size: 15px; }
+      .layout { grid-template-columns: 1fr; gap: 22px; }
+      .card { padding: 20px; box-shadow: 4px 4px 0 var(--ink); }
+      .qr { width: 160px; height: 160px; }
+      .dropzone { min-height: 220px; }
+      .receive-options { flex-direction: column; }
+      .card-top { flex-wrap: wrap; }
+      .laptop { width: 120px; height: 90px; }
+      .phone { width: 68px; height: 114px; }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      * { transition: none !important; animation: none !important; }
+      .packet { left: calc(50% - 15px); }
+    }
+  </style>
+
+  <script defer src="/socket.io/socket.io.js"></script>
+  <script defer src="/app.js"></script>
+</head>
+
+<body>
+  <div class="wrap">
+    <header>
+      <div class="brand">
+        <span class="logo" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none">
+            <path d="m13 2-8 12h6l-1 8 9-13h-6l1-7Z" fill="currentColor"/>
+          </svg>
+        </span>
+        blinkdrop
+      </div>
+
+      <div class="badge" id="badge" role="status">
+        <span class="dot"></span>
+        <span id="badgeText">Getting ready</span>
+      </div>
+    </header>
+
+    <main>
+      <section class="hero">
+        <div>
+          <h1>Big files.<br>Small effort.</h1>
+          <p>
+            From your phone to your laptop, and back.
+            Pair your devices and give your files a new home.
+          </p>
+          <div class="features">
+            <span>No account</span>
+            <span>Original files</span>
+            <span>Files + text</span>
+          </div>
+        </div>
+
+        <div class="link-art" aria-hidden="true">
+          <div class="dev laptop">
+            <svg viewBox="0 0 64 48" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="10" y="6" width="44" height="28" rx="4"/>
+              <path d="M4 42h56"/>
+            </svg>
+          </div>
+          <div class="wire">
+            <span class="packet">
+              <svg viewBox="0 0 24 24" fill="none"><path d="m13 2-8 12h6l-1 8 9-13h-6l1-7Z" fill="currentColor"/></svg>
+            </span>
+          </div>
+          <div class="dev phone">
+            <svg viewBox="0 0 32 48" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="5" y="3" width="22" height="42" rx="5"/>
+              <path d="M13 39h6"/>
+            </svg>
+          </div>
+        </div>
+      </section>
+
+      <div class="layout">
+        <section class="card" aria-labelledby="connectTitle">
+          <div class="card-top">
+            <h2 id="connectTitle"><span class="step">1</span>Connect devices</h2>
+          </div>
+
+          <div id="setup">
+            <label for="deviceName">This device</label>
+            <input id="deviceName" maxlength="40" autocomplete="off">
+
+            <div id="hostInfo" hidden>
+              <img id="qr" class="qr" alt="Scan to connect your other device">
+              <div class="center">
+                <div class="small muted">Scan with your phone’s camera</div>
+                <div class="code" id="roomCode"></div>
+                <div>
+                  <button id="copyLink" class="text-button" type="button">Copy pairing link</button>
+                </div>
+                <p class="small">Pairing code expires after 10 minutes.</p>
+              </div>
+            </div>
+
+            <div class="divider">or enter the other device’s code</div>
+
+            <form id="joinForm">
+              <label for="joinCode">Pairing code</label>
+              <div class="join-row">
+                <input
+                  id="joinCode"
+                  inputmode="numeric"
+                  autocomplete="off"
+                  maxlength="9"
+                  placeholder="1234 5678"
+                  required
+                >
+                <button id="joinButton" class="button" type="submit">Join</button>
+              </div>
+            </form>
+          </div>
+
+          <div id="pairedView" class="center" hidden>
+            <div class="device-art" aria-hidden="true">↔</div>
+            <h3 id="peerName"></h3>
+            <p class="small">
+              Ready to share in both directions.
+              Only send to a device you recognize.
+            </p>
+          </div>
+
+          <div id="connection" class="connection" role="status">
+            Preparing your pairing code…
+          </div>
+
+          <button id="restart" class="button secondary wide" type="button" style="margin-top:14px">
+            Start a new session
+          </button>
+        </section>
+
+        <section class="card" aria-labelledby="shareTitle">
+          <div class="card-top">
+            <h2 id="shareTitle"><span class="step">2</span>Share something</h2>
+
+            <div class="tabs" aria-label="Sharing mode">
+              <button id="filesTab" class="active" type="button" aria-pressed="true">Files</button>
+              <button id="textTab" type="button" aria-pressed="false">Text</button>
+            </div>
+          </div>
+
+          <div id="filesPanel">
+            <input id="fileInput" type="file" multiple hidden>
+
+            <button class="dropzone" id="dropzone" type="button">
+              <span class="upload-art" aria-hidden="true">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                  stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M12 16V3m-5 5 5-5 5 5"/>
+                  <path d="M4 15v5a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-5"/>
+                </svg>
+              </span>
+              <strong>Drop it like it’s a file.</strong>
+              <span class="small">
+                Drag files here or <span class="choose">browse files</span>
+              </span>
+              <span class="file-types" aria-hidden="true">
+                <span>JPG</span><span>MP4</span><span>PDF</span>
+                <span>ZIP</span><span>ANY FILE</span>
+              </span>
+            </button>
+          </div>
+
+          <div class="text-panel" id="textPanel" hidden>
+            <label for="textInput">Text, notes, or a link</label>
+            <textarea
+              id="textInput"
+              maxlength="4000"
+              placeholder="Paste something worth sending…"
+            ></textarea>
+            <div class="text-footer">
+              <span class="small muted">Up to 4,000 characters per message</span>
+              <button id="sendText" class="button" type="button" disabled>Send text ↗</button>
+            </div>
+          </div>
+
+          <div class="receive-options">
+            <p class="small" id="receiveMode">
+              Received files appear below. Browser storage for this session
+              is limited to 256 MiB; download files, then clear finished items.
+            </p>
+            <button id="chooseFolder" class="text-button" type="button" hidden>
+              Choose save folder
+            </button>
+          </div>
+
+          <div class="history-top">
+            <h3>Your transfers</h3>
+            <button id="clearFinished" class="text-button" type="button">Clear finished</button>
+          </div>
+
+          <div id="empty" class="empty">
+            Nothing here yet. Your next transfer starts above.
+          </div>
+
+          <div id="transfers" aria-label="Transfers"></div>
+        </section>
+      </div>
+    </main>
+
+    <footer>
+      Keep both pages open and both devices awake while sharing.
+      Connect to the same Wi-Fi for the local setup.
+    </footer>
+  </div>
+
+  <dialog id="pairDialog" aria-labelledby="pairTitle">
+    <h3 id="pairTitle">Is this your device?</h3>
+    <p class="small">
+      <strong id="requestName"></strong> wants to connect.
+      Check that this number matches the one on that device:
+    </p>
+    <div class="code center" id="requestPin"></div>
+    <p class="small">
+      Allowing the connection lets this device send you files and text.
+    </p>
+    <div class="buttons">
+      <button id="rejectPair" class="button secondary" type="button">Decline</button>
+      <button id="acceptPair" class="button" type="button">Allow device</button>
+    </div>
+  </dialog>
+
+  <div id="toast" role="status" hidden></div>
+</body>
+</html>
