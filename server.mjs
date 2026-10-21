@@ -33,7 +33,9 @@ const server = createServer((req, res) => {
   res.setHeader("Cache-Control", "no-store");
   res.setHeader(
     "Content-Security-Policy",
-    "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; " +
+    "default-src 'self'; script-src 'self'; " +
+      "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; " +
+      "font-src https://fonts.gstatic.com; " +
       "img-src 'self' data:; connect-src 'self' ws: wss:; " +
       "object-src 'none'; base-uri 'none'; frame-ancestors 'none'"
   );
